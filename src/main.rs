@@ -55,11 +55,10 @@ fn encode(opts: &ArgMatches) {
         for x in 0..input_image.width() {
             let pixel = input_image.get_pixel(x, y);
 
-            if (x % 2 == 0) && (y % 2 == 0) {
+            if (x & 1 == 0) && (y & 1 == 0) {
                 // X and Y are both even: blue filter
                 output_image.put_pixel(x, y, Luma([pixel[2]]));
-
-            } else if (x % 2 == 1) && (y % 2 == 1) {
+            } else if (x & 1 == 1) && (y & 1 == 1) {
                 // X and Y are both odd: red filter
                 output_image.put_pixel(x, y, Luma([pixel[0]]));
             } else {
