@@ -3,9 +3,16 @@ extern crate num;
 #[macro_use]
 extern crate num_derive;
 
+mod encoders;
+mod decoders;
+
 use std::{io, path};
 use clap::{App, Arg, ArgMatches};
-use image::{io::Reader, DynamicImage, GenericImageView, ImageBuffer, RgbImage, Rgb, GrayImage, Luma};
+use image::{io::Reader, GenericImageView, ImageBuffer, RgbImage, GrayImage};
+
+
+use encoders::encode_basic;
+use decoders::{DecodeMode, decode_none, decode_simple};
 
 fn main() {
     
@@ -72,32 +79,9 @@ fn encode(opts: &ArgMatches) {
     let input_image = Reader::open(&input_filename).unwrap().decode().unwrap();
     let mut output_image : GrayImage = ImageBuffer::new(input_image.width(), input_image.height());
 
-    for y in 0..input_image.height() {
-        for x in 0..input_image.width() {
-            let pixel = input_image.get_pixel(x, y);
-
-            if (x & 1 == 0) && (y & 1 == 0) {
-                // X and Y are both even: blue filter
-                output_image.put_pixel(x, y, Luma([pixel[2]]));
-            } else if (x & 1 == 1) && (y & 1 == 1) {
-                // X and Y are both odd: red filter
-                output_image.put_pixel(x, y, Luma([pixel[0]]));
-            } else {
-                // X and Y are mixed: green filter
-                output_image.put_pixel(x, y, Luma([pixel[1]]));
-            }
-        }
-    }
+    encode_basic(input_image, &mut output_image);
 
     output_image.save(&output_filename).expect("Failed to write output");
-}
-
-#[derive(Eq, PartialEq, FromPrimitive)]
-enum DecodeMode {
-    Invalid = -1,
-    None = 0,
-    Simple = 1,
-    Interpolate = 2
 }
 
 /// Decode an image
@@ -116,7 +100,7 @@ fn decode(opts: &ArgMatches) {
             Ok(enum_value) => num::FromPrimitive::from_u32(enum_value).unwrap_or(DecodeMode::Invalid),
             Err(_) => DecodeMode::Invalid
         },
-        None => DecodeMode::None
+        None => DecodeMode::Simple
     };
 
     if mode == DecodeMode::Invalid {
@@ -138,44 +122,4 @@ fn decode(opts: &ArgMatches) {
     }
 
     output_image.save(&output_filename).expect("Failed to write output");
-}
-
-///
-fn decode_none(input_image: DynamicImage, output_image: &mut RgbImage) {
-    for y in 0..input_image.height() {
-        for x in 0..input_image.width() {
-            let pixel = input_image.get_pixel(x, y)[0];
-
-            if (x & 1 == 0) && (y & 1 == 0) {
-                // X and Y are both even: blue filter
-                output_image.put_pixel(x, y, Rgb([0, 0, pixel]));
-            } else if (x & 1 == 1) && (y & 1 == 1) {
-                // X and Y are both odd: red filter
-                output_image.put_pixel(x, y, Rgb([pixel, 0, 0]));
-            } else {
-                // X and Y are mixed: green filter
-                output_image.put_pixel(x, y, Rgb([0, pixel, 0]));
-            }
-        }
-    }
-}
-
-///
-fn decode_simple(input_image: DynamicImage, output_image: &mut RgbImage) {
-    for y in (0..input_image.height()).step_by(2) {
-        for x in (0..input_image.width()).step_by(2) {
-            
-            let blue = input_image.get_pixel(x, y)[0];
-            let green0 = input_image.get_pixel(x + 1, y)[0];
-            let green1 = input_image.get_pixel(x, y + 1)[0];
-            let red = input_image.get_pixel(x + 1, y + 1)[0];
-
-            let pixel0 = Rgb([red, green0, blue]);
-            let pixel1 = Rgb([red, green1, blue]);
-            output_image.put_pixel(x, y, pixel0);
-            output_image.put_pixel(x + 1, y, pixel0);
-            output_image.put_pixel(x, y + 1, pixel1);
-            output_image.put_pixel(x + 1, y + 1, pixel1);
-        }
-    }
 }
