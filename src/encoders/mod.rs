@@ -1,4 +1,3 @@
-
 use image::{DynamicImage, GenericImageView, GrayImage, Luma};
 
 ///

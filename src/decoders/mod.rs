@@ -1,7 +1,6 @@
-
 // TODO Split this further
 
-use image::{DynamicImage, GenericImageView, RgbImage, Rgb};
+use image::{DynamicImage, GenericImageView, Rgb, RgbImage};
 
 ///
 #[derive(Eq, PartialEq, FromPrimitive)]
@@ -9,7 +8,7 @@ pub enum DecodeMode {
     Invalid = -1,
     None = 0,
     Simple = 1,
-    Interpolate = 2
+    Interpolate = 2,
 }
 
 ///
@@ -36,7 +35,6 @@ pub fn decode_none(input_image: DynamicImage, output_image: &mut RgbImage) {
 pub fn decode_simple(input_image: DynamicImage, output_image: &mut RgbImage) {
     for y in (0..input_image.height()).step_by(2) {
         for x in (0..input_image.width()).step_by(2) {
-            
             let blue = input_image.get_pixel(x, y)[0];
             let green0 = input_image.get_pixel(x + 1, y)[0];
             let green1 = input_image.get_pixel(x, y + 1)[0];
